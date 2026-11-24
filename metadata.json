@@ -1,0 +1,6 @@
+{
+  "name": "NusaKlik — Toko Produk Digital Modern",
+  "description": "Temukan Produk Digital, Buka Peluang Baru. Baca • Belajar • Berkarya • Berkreasi di NusaKlik.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

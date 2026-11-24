@@ -1,0 +1,17 @@
+name = "nusaklik-api"
+main = "worker/src/index.ts"
+compatibility_date = "2026-01-01"
+
+# Free tier Cloudflare D1 database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "nusaklik_db"
+database_id = "GANTI_DENGAN_DATABASE_ID_DARI_WRANGLER"
+
+# Free tier Cloudflare R2 private bucket for digital products & payment proofs
+[[r2_buckets]]
+binding = "PRIVATE_BUCKET"
+bucket_name = "nusaklik-private"
+
+[vars]
+ALLOWED_ORIGIN = "https://username.github.io"

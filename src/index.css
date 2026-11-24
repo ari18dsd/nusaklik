@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --nusa-slate: #345477;
+    --nusa-slate-hover: #294462;
+    --nusa-gold: #d6b36a;
+    --nusa-gold-deep: #b89143;
+    --nusa-white: #ffffff;
+    --nusa-charcoal: #26364a;
+    --nusa-dusty: #7890aa;
+    --nusa-hairline: rgba(52, 84, 119, 0.14);
+  }
+
+  html {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #ffffff;
+    color: #26364a;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: #26364a;
+    overflow-x: hidden;
+  }
+
+  h1, h2, .font-display {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+
+  .font-sans-ui {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .font-mono-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* 3D Book Cover Mockup — Proportional, Subtle, Legible */
+.book-3d-stage {
+  perspective: 1100px;
+}
+
+.book-3d-wrapper {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(-7deg) rotateX(1.5deg);
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), filter 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+@media (min-width: 768px) {
+  .book-3d-wrapper {
+    transform: rotateY(-13deg) rotateX(2deg);
+  }
+  .group:hover .book-3d-wrapper,
+  .book-3d-stage:hover .book-3d-wrapper {
+    transform: rotateY(-5deg) rotateX(0.5deg) translateY(-4px);
+  }
+}
+
+.book-3d-cover {
+  position: relative;
+  border-radius: 3px 6px 6px 3px;
+  box-shadow:
+    -6px 10px 22px -6px rgba(38, 54, 74, 0.24),
+    -2px 4px 8px -2px rgba(52, 84, 119, 0.14),
+    inset 1px 0 0 rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.book-3d-spine {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: -11px;
+  width: 12px;
+  background: linear-gradient(90deg, #243b55 0%, #345477 65%, #4a6c91 100%);
+  transform: rotateY(-78deg);
+  transform-origin: right center;
+  border-radius: 3px 0 0 3px;
+  box-shadow: inset -2px 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.book-3d-pages {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  right: -6px;
+  width: 7px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffffff 0px,
+    #ffffff 1px,
+    #e5ebf2 2px
+  );
+  transform: rotateY(82deg);
+  transform-origin: left center;
+  border-radius: 0 2px 2px 0;
+  border-top: 1px solid rgba(52, 84, 119, 0.16);
+  border-bottom: 1px solid rgba(52, 84, 119, 0.16);
+}
+
+.book-3d-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.05) 32%,
+    rgba(0, 0, 0, 0) 58%,
+    rgba(38, 54, 74, 0.06) 100%
+  );
+}
+
+/* Print Styles for A4 Invoice */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #26364a !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only-invoice {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-3d-wrapper,
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

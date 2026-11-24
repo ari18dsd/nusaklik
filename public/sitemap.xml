@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/</loc><changefreq>daily</changefreq><priority>1.0</priority></url>
+  <url><loc>/katalog</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>/kategori</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/produk-gratis</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/produk-promo</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/produk-unggulan</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>/tentang</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>/kontak</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>/panduan-pembelian</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>/kebijakan-privasi</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>/syarat-ketentuan</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+  <url><loc>/kebijakan-pengembalian-dana</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
+</urlset>
