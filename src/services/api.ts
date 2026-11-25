@@ -1,3 +1,5 @@
+import { IS_STATIC_SITE } from '../config/staticSite';
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status = 400) {
@@ -15,6 +17,10 @@ interface RequestOptions {
 }
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  if (IS_STATIC_SITE) {
+    throw new ApiError('Fitur ini memerlukan server toko dan tidak tersedia pada situs statis.', 503);
+  }
+
   const { method = 'GET', body, token, orderAccessToken, isFormData = false } = options;
 
   const headers: Record<string, string> = {};

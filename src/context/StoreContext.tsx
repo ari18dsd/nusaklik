@@ -1,4 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { IS_STATIC_SITE, siteAsset } from '../config/staticSite';
+import { STATIC_CATEGORIES, STATIC_DEMO_PRODUCTS } from '../config/staticCatalog';
+import { loadPublicCatalog } from '../services/publicCatalog';
 import { apiRequest } from '../services/api';
 import type { AdminUser, CartItem, Category, CustomerUser, Product, StoreSettings } from '../types';
 import { getEffectivePrice } from '../utils/format';
@@ -10,6 +13,10 @@ interface StoreContextValue {
   categories: Category[];
   loadingConfig: boolean;
   refreshConfig: () => Promise<void>;
+  publicCatalogProducts: Product[];
+  publicCatalogLoading: boolean;
+  publicCatalogError: string | null;
+  publicCatalogSource: 'loading' | 'admin' | 'fallback';
 
   // Cart
   cart: CartItem[];
@@ -47,14 +54,14 @@ const DEFAULT_SETTINGS: StoreSettings = {
   tagline_sub: 'Baca • Belajar • Berkarya • Berkreasi.',
   store_description:
     'Toko produk digital independen Indonesia yang menghadirkan e-book, template website, materi pendidikan, dan aset kreatif terkurasi.',
-  logo_url: '/assets/logo/logo-horizontal.svg',
-  logo_white_url: '/assets/logo/logo-white.svg',
-  banner_hero_url: '/assets/banner/hero-nusaklik.jpg',
-  banner_promo_url: '/assets/banner/promo-nusaklik.jpg',
+  logo_url: siteAsset('assets/logo/logo-horizontal.svg'),
+  logo_white_url: siteAsset('assets/logo/logo-white.svg'),
+  banner_hero_url: siteAsset('assets/banner/hero-nusaklik.jpg'),
+  banner_promo_url: siteAsset('assets/banner/promo-nusaklik.jpg'),
   banner_promo_title: 'Koleksi Kurasi Kreatif & Bisnis Digital',
   banner_promo_subtitle: 'Lihat produk digital dan informasi promo yang diaktifkan oleh pengelola toko.',
-  watermark_url: '/assets/watermark/watermark-blue.png',
-  favicon_url: '/assets/favicon/favicon.svg',
+  watermark_url: siteAsset('assets/watermark/watermark-blue.png'),
+  favicon_url: siteAsset('assets/favicon/favicon.svg'),
   whatsapp_number: '',
   email: '',
   bank_name: '',
@@ -74,10 +81,31 @@ const DEFAULT_SETTINGS: StoreSettings = {
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
+function getCategoriesWithProductCounts(products: Product[]): Category[] {
+  const counts = new Map<string, number>();
+  for (const product of products) {
+    if (product.category_slug) {
+      counts.set(product.category_slug, (counts.get(product.category_slug) ?? 0) + 1);
+    }
+  }
+  return STATIC_CATEGORIES.map((category) => ({
+    ...category,
+    product_count: counts.get(category.slug) ?? 0,
+  }));
+}
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(() =>
+    IS_STATIC_SITE ? getCategoriesWithProductCounts([]) : []
+  );
   const [loadingConfig, setLoadingConfig] = useState(true);
+  const [publicCatalogProducts, setPublicCatalogProducts] = useState<Product[]>([]);
+  const [publicCatalogLoading, setPublicCatalogLoading] = useState(IS_STATIC_SITE);
+  const [publicCatalogError, setPublicCatalogError] = useState<string | null>(null);
+  const [publicCatalogSource, setPublicCatalogSource] = useState<
+    'loading' | 'admin' | 'fallback'
+  >(IS_STATIC_SITE ? 'loading' : 'admin');
 
   const [cart, setCart] = useState<CartItem[]>(() => {
     try {
@@ -108,6 +136,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [toast]);
 
   const refreshConfig = useCallback(async () => {
+    if (IS_STATIC_SITE) {
+      setCategories(getCategoriesWithProductCounts([]));
+      setLoadingConfig(false);
+      return;
+    }
     try {
       const [settingsRes, catRes] = await Promise.all([
         apiRequest<{ settings: StoreSettings }>('/settings'),
@@ -125,6 +158,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     void refreshConfig();
   }, [refreshConfig]);
+
+  const refreshPublicCatalog = useCallback(async () => {
+    if (!IS_STATIC_SITE) return;
+    setPublicCatalogLoading(true);
+    setPublicCatalogError(null);
+    try {
+      const products = await loadPublicCatalog();
+      setPublicCatalogProducts(products);
+      setPublicCatalogSource('admin');
+      setCategories(getCategoriesWithProductCounts(products));
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Katalog Admin Google Sheets tidak dapat dimuat.';
+      setPublicCatalogProducts(STATIC_DEMO_PRODUCTS);
+      setPublicCatalogSource('fallback');
+      setPublicCatalogError(message);
+      setCategories(getCategoriesWithProductCounts(STATIC_DEMO_PRODUCTS));
+    } finally {
+      setPublicCatalogLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshPublicCatalog();
+  }, [refreshPublicCatalog]);
 
   // Keep browser favicon synchronized if admin updates favicon_url
   useEffect(() => {
@@ -234,6 +294,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         categories,
         loadingConfig,
         refreshConfig,
+        publicCatalogProducts,
+        publicCatalogLoading,
+        publicCatalogError,
+        publicCatalogSource,
         cart,
         addToCart,
         removeFromCart,

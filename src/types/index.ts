@@ -35,6 +35,7 @@ export interface Product {
   cover_aspect_type: 'book' | 'digital';
   digital_file_name: string;
   has_digital_file?: boolean;
+  manual_order_url?: string;
   download_count: number;
   created_at: string;
   updated_at: string;

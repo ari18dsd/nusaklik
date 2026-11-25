@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { SeoHead } from '../components/SeoHead';
+import { StaticDemoNotice } from '../components/StaticDemoNotice';
+import { IS_STATIC_SITE } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { apiRequest } from '../services/api';
 import type { Product } from '../types';
@@ -16,7 +18,12 @@ interface CatalogPageProps {
 export function CatalogPage({ presetFilter, pageTitle, pageDescription }: CatalogPageProps) {
   const { slug: categorySlugParam } = useParams<{ slug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { categories, showToast } = useStore();
+  const {
+    categories,
+    showToast,
+    publicCatalogProducts,
+    publicCatalogLoading,
+  } = useStore();
 
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [selectedCategory, setSelectedCategory] = useState(
@@ -48,6 +55,47 @@ export function CatalogPage({ presetFilter, pageTitle, pageDescription }: Catalo
   useEffect(() => {
     let active = true;
     setLoading(true);
+
+    if (IS_STATIC_SITE) {
+      const normalizedQuery = query.trim().toLocaleLowerCase();
+      const filtered = publicCatalogProducts.filter((product) => {
+        const matchesQuery =
+          !normalizedQuery ||
+          `${product.title} ${product.summary} ${product.description} ${product.category_name}`
+            .toLocaleLowerCase()
+            .includes(normalizedQuery);
+        const matchesCategory = !selectedCategory || product.category_slug === selectedCategory;
+        const matchesFilter =
+          !selectedFilter ||
+          (selectedFilter === 'gratis' && product.is_free === 1) ||
+          (selectedFilter === 'promo' &&
+            (product.is_promo === 1 ||
+              (product.discount_price !== null && product.discount_price < product.price))) ||
+          (selectedFilter === 'unggulan' && product.is_featured === 1) ||
+          (selectedFilter === 'populer' && product.is_popular === 1);
+        return matchesQuery && matchesCategory && matchesFilter;
+      });
+
+      if (sort === 'populer') {
+        filtered.sort((a, b) => b.is_popular - a.is_popular || b.id - a.id);
+      } else if (sort === 'harga_terendah') {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (sort === 'harga_tertinggi') {
+        filtered.sort((a, b) => b.price - a.price);
+      } else {
+        filtered.sort((a, b) => b.id - a.id);
+      }
+
+      const pageSize = 12;
+      setProducts(filtered.slice(0, page * pageSize));
+      setTotal(filtered.length);
+      setTotalPages(Math.max(1, Math.ceil(filtered.length / pageSize)));
+      setLoading(publicCatalogLoading);
+      return () => {
+        active = false;
+      };
+    }
+
     const params = new URLSearchParams();
     if (query.trim()) params.set('q', query.trim());
     if (selectedCategory) params.set('category', selectedCategory);
@@ -77,7 +125,16 @@ export function CatalogPage({ presetFilter, pageTitle, pageDescription }: Catalo
     return () => {
       active = false;
     };
-  }, [query, selectedCategory, selectedFilter, sort, page, showToast]);
+  }, [
+    query,
+    selectedCategory,
+    selectedFilter,
+    sort,
+    page,
+    showToast,
+    publicCatalogProducts,
+    publicCatalogLoading,
+  ]);
 
   const activeCategoryObj = categories.find((c) => c.slug === selectedCategory);
   const computedTitle =
@@ -101,6 +158,7 @@ export function CatalogPage({ presetFilter, pageTitle, pageDescription }: Catalo
   return (
     <div className="bg-white min-h-[70vh]">
       <SeoHead title={computedTitle} description={computedDesc} />
+      {IS_STATIC_SITE && <StaticDemoNotice />}
 
       <section className="bg-[#EAF0F7] border-b border-[#345477]/12 py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
@@ -126,7 +184,9 @@ export function CatalogPage({ presetFilter, pageTitle, pageDescription }: Catalo
               <p className="text-sm sm:text-base text-[#7890AA]">{computedDesc}</p>
             </div>
             <p className="font-mono-num text-sm text-[#345477] font-semibold shrink-0">
-              Menampilkan {products.length} dari {total} produk
+              {IS_STATIC_SITE
+                ? `Menampilkan ${products.length} dari ${total} entri katalog`
+                : `Menampilkan ${products.length} dari ${total} produk`}
             </p>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { Menu, ShoppingBag, User, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import { IS_STATIC_SITE, siteAsset } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { isSafeUrl } from '../utils/format';
 
@@ -16,7 +17,7 @@ export function Header() {
     { to: '/tentang', label: 'Tentang' },
   ];
 
-  const logoSrc = isSafeUrl(settings.logo_url) ? settings.logo_url : '/assets/logo/logo-horizontal.svg';
+  const logoSrc = isSafeUrl(settings.logo_url) ? settings.logo_url : siteAsset('assets/logo/logo-horizontal.svg');
 
   return (
     <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#345477]/12">
@@ -35,7 +36,7 @@ export function Header() {
         </Link>
 
         {/* Zone 2: Primary Navigation (4-5 concise links) */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium text-[#26364A]" aria-label="Navigasi utama">
+        <nav className="hidden lg:flex items-center gap-7 text-sm font-medium text-[#26364A]" aria-label="Navigasi utama">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -56,28 +57,55 @@ export function Header() {
 
         {/* Zone 3: Primary Action Zone */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <Link
-            to="/keranjang"
-            className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#26364A] border border-[#345477]/15 hover:border-[#345477]/40 transition-colors whitespace-nowrap shrink-0"
-            aria-label={`Keranjang belanja, ${cartCount} item`}
-          >
-            <ShoppingBag className="w-4 h-4 text-[#345477]" />
-            <span className="hidden sm:inline">Keranjang</span>
-            <span className="font-mono-num text-xs font-bold text-[#345477]">({cartCount})</span>
-          </Link>
+          {IS_STATIC_SITE ? (
+            <>
+              <button
+                type="button"
+                disabled
+                title="Keranjang tidak tersedia pada versi statis."
+                className="relative inline-flex cursor-not-allowed items-center gap-2 rounded-lg border border-[#345477]/15 px-3 py-2 text-sm font-medium text-[#7890AA] opacity-75"
+                aria-label="Keranjang tidak tersedia pada versi statis"
+              >
+                <ShoppingBag className="h-4 w-4 text-[#345477]" />
+                <span className="hidden sm:inline">Keranjang</span>
+                <span className="text-xs">Nonaktif</span>
+              </button>
+              <button
+                type="button"
+                disabled
+                title="Akun tidak tersedia pada versi statis."
+                className="hidden cursor-not-allowed items-center gap-1.5 whitespace-nowrap rounded-lg bg-[#345477] px-4 py-2 text-sm font-semibold text-white opacity-75 sm:inline-flex"
+              >
+                <User className="h-4 w-4 text-[#D6B36A]" />
+                <span>Akun Nonaktif</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/keranjang"
+                className="relative inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[#26364A] border border-[#345477]/15 hover:border-[#345477]/40 transition-colors whitespace-nowrap shrink-0"
+                aria-label={`Keranjang belanja, ${cartCount} item`}
+              >
+                <ShoppingBag className="w-4 h-4 text-[#345477]" />
+                <span className="hidden sm:inline">Keranjang</span>
+                <span className="font-mono-num text-xs font-bold text-[#345477]">({cartCount})</span>
+              </Link>
 
-          <Link
-            to={customer ? '/akun' : '/masuk'}
-            className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#345477] text-white hover:bg-[#294462] transition-colors whitespace-nowrap shrink-0"
-          >
-            <User className="w-4 h-4 text-[#D6B36A]" />
-            <span>{customer ? 'Akun Saya' : 'Masuk'}</span>
-          </Link>
+              <Link
+                to={customer ? '/akun' : '/masuk'}
+                className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-[#345477] text-white hover:bg-[#294462] transition-colors whitespace-nowrap shrink-0"
+              >
+                <User className="w-4 h-4 text-[#D6B36A]" />
+                <span>{customer ? 'Akun Saya' : 'Masuk'}</span>
+              </Link>
+            </>
+          )}
 
           <button
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
-            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[#345477]/15 text-[#26364A]"
+            className="lg:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg border border-[#345477]/15 text-[#26364A]"
             aria-label={mobileOpen ? 'Tutup menu' : 'Buka menu'}
             aria-expanded={mobileOpen}
           >
@@ -88,7 +116,7 @@ export function Header() {
 
       {/* Mobile Navigation Drawer */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-b border-[#345477]/15 px-4 py-4 space-y-2">
+        <div className="lg:hidden bg-white border-b border-[#345477]/15 px-4 py-4 space-y-2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -113,11 +141,11 @@ export function Header() {
               Kategori
             </Link>
             <Link
-              to={customer ? '/akun' : '/masuk'}
+              to={IS_STATIC_SITE ? '/kontak' : customer ? '/akun' : '/masuk'}
               onClick={() => setMobileOpen(false)}
               className="text-center px-3 py-2.5 rounded-lg text-sm font-semibold bg-[#345477] text-white"
             >
-              {customer ? 'Akun Saya' : 'Masuk / Daftar'}
+              {IS_STATIC_SITE ? 'Pemesanan' : customer ? 'Akun Saya' : 'Masuk / Daftar'}
             </Link>
           </div>
         </div>

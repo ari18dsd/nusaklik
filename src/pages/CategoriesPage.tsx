@@ -1,6 +1,8 @@
 import { ArrowRight, BookOpen, Layers } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SeoHead } from '../components/SeoHead';
+import { StaticDemoNotice } from '../components/StaticDemoNotice';
+import { IS_STATIC_SITE } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 
 export function CategoriesPage() {
@@ -10,8 +12,13 @@ export function CategoriesPage() {
     <div className="bg-white min-h-[70vh]">
       <SeoHead
         title="Kategori Produk Digital"
-        description="Jelajahi 12 kategori produk digital di NusaKlik mulai dari E-book, Template Website, Novel, Cerita Anak, hingga Materi Pendidikan."
+        description={
+          IS_STATIC_SITE
+            ? 'Kategori katalog NusaKlik yang memuat produk aktif dari Admin Google Sheets untuk pemesanan manual.'
+            : 'Jelajahi 12 kategori produk digital di NusaKlik mulai dari E-book, Template Website, Novel, Cerita Anak, hingga Materi Pendidikan.'
+        }
       />
+      {IS_STATIC_SITE && <StaticDemoNotice />}
 
       <section className="bg-[#EAF0F7] border-b border-[#345477]/12 py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
@@ -54,7 +61,7 @@ export function CategoriesPage() {
                     )}
                   </div>
                   <span className="font-mono-num text-xs text-[#7890AA]">
-                    {cat.product_count ?? 0} produk
+                        {IS_STATIC_SITE ? `${cat.product_count ?? 0} entri katalog` : `${cat.product_count ?? 0} produk`}
                   </span>
                 </div>
                 <h2 className="font-sans-ui text-lg font-bold text-[#26364A] group-hover:text-[#345477]">

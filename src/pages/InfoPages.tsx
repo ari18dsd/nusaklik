@@ -2,6 +2,8 @@ import { CheckCircle2, Mail, MessageCircle, MessageSquare, Phone } from 'lucide-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SeoHead } from '../components/SeoHead';
+import { StaticDemoNotice } from '../components/StaticDemoNotice';
+import { IS_STATIC_SITE } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { apiRequest } from '../services/api';
 import { isSafeUrl } from '../utils/format';
@@ -12,8 +14,13 @@ export function AboutPage() {
     <div className="bg-white">
       <SeoHead
         title={`Tentang ${settings.store_name}`}
-        description={settings.store_description}
+        description={
+          IS_STATIC_SITE
+            ? 'Tentang katalog NusaKlik yang terhubung ke Google Sheets dan pemesanan manual melalui Google Form.'
+            : settings.store_description
+        }
       />
+      {IS_STATIC_SITE && <StaticDemoNotice />}
 
       <section className="bg-[#EAF0F7] border-b border-[#345477]/12 py-12 sm:py-14">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
@@ -36,7 +43,11 @@ export function AboutPage() {
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-10">
         <div className="space-y-6 text-base text-[#26364A] leading-relaxed">
-          <p>{settings.store_description}</p>
+          <p>
+            {IS_STATIC_SITE
+              ? 'Katalog publik NusaKlik memuat produk aktif dari Admin Google Sheets. Pemesanan dilakukan melalui Google Form; file produk hanya diberikan setelah pembayaran diverifikasi secara manual.'
+              : settings.store_description}
+          </p>
           <p>
             Kami percaya bahwa akses terhadap bacaan bermutu, materi pendidikan terstruktur, serta
             perangkat kerja digital yang rapi dapat membantu individu, pelajar, dan pelaku usaha di
@@ -45,7 +56,22 @@ export function AboutPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
+          {(IS_STATIC_SITE
+            ? [
+                {
+                  title: 'Katalog Terhubung',
+                  desc: 'Katalog publik mengambil data produk aktif langsung dari Google Sheets saat situs dibuka.',
+                },
+                {
+                  title: 'Pemesanan Manual',
+                  desc: 'Tombol Pesan Sekarang membuka Google Form; GitHub Pages tidak memproses checkout atau pembayaran.',
+                },
+                {
+                  title: 'File Privat Tidak Disertakan',
+                  desc: 'Tautan file produk privat tidak diambil atau ditampilkan di katalog publik.',
+                },
+              ]
+            : [
             {
               title: 'Kurasi Mandiri',
               desc: 'Setiap produk yang masuk ke katalog diperiksa kejelasan materi, format berkas, dan lisensinya.',
@@ -58,7 +84,7 @@ export function AboutPage() {
               title: 'Pengiriman Terproteksi',
               desc: 'Berkas produk berbayar disimpan di penyimpanan privat dan hanya dapat diunduh setelah pembayaran Lunas.',
             },
-          ].map((card) => (
+          ]).map((card) => (
             <div key={card.title} className="p-6 rounded-2xl border border-[#D6B36A]/45 bg-[#F5F0E6] space-y-2">
               <h2 className="font-sans-ui text-base font-bold text-[#345477]">{card.title}</h2>
               <p className="text-sm text-[#26364A]/80 leading-relaxed">{card.desc}</p>
@@ -320,11 +346,39 @@ const FULL_FAQS = [
   },
 ];
 
+const STATIC_FAQS = [
+  {
+    q: 'Apa yang ditampilkan oleh versi GitHub Pages?',
+    a: 'Katalog mengambil produk aktif dari endpoint publik Google Sheets saat halaman dibuka. Jika endpoint tidak tersedia, situs menampilkan katalog cadangan.',
+  },
+  {
+    q: 'Bagaimana cara memesan produk?',
+    a: 'Gunakan tombol Pesan Sekarang pada kartu atau halaman detail produk untuk membuka Google Form. Ikuti instruksi pemesanan dan pembayaran yang tercantum di formulir.',
+  },
+  {
+    q: 'Apakah tautan file produk ditampilkan di situs?',
+    a: 'Tidak. Katalog publik hanya menampilkan informasi produk. Tautan PDF atau file privat tidak diambil dan tidak ditampilkan.',
+  },
+  {
+    q: 'Kapan saya menerima file produk?',
+    a: 'File diberikan secara manual kepada pembeli setelah pembayaran diverifikasi. Situs tidak menyediakan unduhan otomatis.',
+  },
+  {
+    q: 'Apakah login, keranjang, dan Admin berfungsi?',
+    a: 'Tidak. Fitur-fitur tersebut memerlukan backend dan sengaja tidak tersedia di GitHub Pages.',
+  },
+  {
+    q: 'Bagaimana cara menghubungi pengelola?',
+    a: 'Kontak resmi belum dikonfigurasi untuk versi statis ini. Jangan melakukan pembayaran berdasarkan informasi demo.',
+  },
+];
+
 export function FaqPage() {
+  const faqs = IS_STATIC_SITE ? STATIC_FAQS : FULL_FAQS;
   const faqJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FULL_FAQS.map((item) => ({
+    mainEntity: faqs.map((item) => ({
       '@type': 'Question',
       name: item.q,
       acceptedAnswer: { '@type': 'Answer', text: item.a },
@@ -334,10 +388,15 @@ export function FaqPage() {
   return (
     <div className="bg-white">
       <SeoHead
-        title="Pertanyaan Umum (FAQ)"
-        description="Jawaban lengkap mengenai cara pembelian, verifikasi pembayaran, unduhan produk digital, dan invoice di NusaKlik."
+        title={IS_STATIC_SITE ? 'FAQ Pratinjau Statis' : 'Pertanyaan Umum (FAQ)'}
+        description={
+          IS_STATIC_SITE
+            ? 'Informasi katalog Google Sheets, pemesanan manual melalui Google Form, dan pengiriman file privat NusaKlik.'
+            : 'Jawaban lengkap mengenai cara pembelian, verifikasi pembayaran, unduhan produk digital, dan invoice di NusaKlik.'
+        }
         jsonLd={faqJsonLd}
       />
+      {IS_STATIC_SITE && <StaticDemoNotice />}
 
       <section className="bg-[#EAF0F7] border-b border-[#345477]/12 py-12 sm:py-14">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
@@ -345,14 +404,16 @@ export function FaqPage() {
             Pertanyaan yang Sering Diajukan (FAQ)
           </h1>
           <p className="text-sm sm:text-base text-[#7890AA]">
-            Temukan informasi seputar pemesanan, pembayaran, dan akses produk digital NusaKlik.
+            {IS_STATIC_SITE
+              ? 'Informasi seputar katalog produk dan pemesanan manual NusaKlik.'
+              : 'Temukan informasi seputar pemesanan, pembayaran, dan akses produk digital NusaKlik.'}
           </p>
         </div>
       </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="divide-y divide-[#345477]/14 border-y border-[#345477]/14">
-          {FULL_FAQS.map((item) => (
+          {faqs.map((item) => (
             <div key={item.q} className="py-5 space-y-2">
               <h2 className="font-sans-ui text-base font-bold text-[#26364A]">{item.q}</h2>
               <p className="text-sm sm:text-base text-[#7890AA] leading-relaxed">{item.a}</p>

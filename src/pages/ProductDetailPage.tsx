@@ -4,6 +4,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { ProductCover3D } from '../components/ProductCover3D';
 import { SeoHead } from '../components/SeoHead';
+import { StaticDemoNotice } from '../components/StaticDemoNotice';
+import { IS_STATIC_SITE } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { apiRequest } from '../services/api';
 import type { Product } from '../types';
@@ -12,7 +14,7 @@ import { formatRupiah, getEffectivePrice } from '../utils/format';
 export function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { addToCart } = useStore();
+  const { addToCart, publicCatalogProducts, publicCatalogLoading } = useStore();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
@@ -24,6 +26,32 @@ export function ProductDetailPage() {
     let active = true;
     setLoading(true);
     setError('');
+
+    if (IS_STATIC_SITE) {
+      if (publicCatalogLoading) {
+        return () => {
+          active = false;
+        };
+      }
+
+      const currentProduct = publicCatalogProducts.find((item) => item.slug === slug);
+      if (currentProduct) {
+        setProduct(currentProduct);
+        setRelated(
+          publicCatalogProducts.filter(
+            (item) => item.category_slug === currentProduct.category_slug && item.id !== currentProduct.id
+          ).slice(0, 4)
+        );
+      } else {
+        setProduct(null);
+        setRelated([]);
+        setError('Produk tidak ditemukan atau tidak aktif di katalog.');
+      }
+      setLoading(false);
+      return () => {
+        active = false;
+      };
+    }
 
     apiRequest<{ product: Product; related: Product[] }>(`/products/${encodeURIComponent(slug)}`)
       .then((res) => {
@@ -41,7 +69,7 @@ export function ProductDetailPage() {
     return () => {
       active = false;
     };
-  }, [slug]);
+  }, [slug, publicCatalogProducts, publicCatalogLoading]);
 
   if (loading) {
     return (
@@ -74,6 +102,8 @@ export function ProductDetailPage() {
   }
 
   const isBook = product.cover_aspect_type === 'book' || product.is_book_format === 1;
+  const isManualOrder = Boolean(product.manual_order_url);
+  const isDemoProduct = IS_STATIC_SITE && !isManualOrder;
   const hasDiscount = !product.is_free && product.discount_price !== null && product.discount_price < product.price;
   const effectivePrice = getEffectivePrice(product.price, product.discount_price, product.is_free);
   const benefitLines = product.benefits
@@ -103,7 +133,12 @@ export function ProductDetailPage() {
 
   return (
     <div className="bg-white">
-      <SeoHead title={product.title} description={product.summary} jsonLd={productJsonLd} />
+      <SeoHead
+        title={isDemoProduct ? `${product.title} (DEMO)` : product.title}
+        description={product.summary}
+        jsonLd={isDemoProduct ? undefined : productJsonLd}
+      />
+      {isDemoProduct && <StaticDemoNotice />}
 
       <div className="bg-[#EAF0F7] border-b border-[#345477]/12 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -149,6 +184,11 @@ export function ProductDetailPage() {
           <div className="lg:col-span-7 space-y-7">
             <div className="space-y-3 border-b border-[#345477]/12 pb-6">
               <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-[#7890AA]">
+                {isDemoProduct && (
+                  <span className="rounded-full border border-[#D6B36A]/60 bg-[#F5F0E6] px-2.5 py-1 font-bold text-[#8A6420]">
+                    DATA DEMO
+                  </span>
+                )}
                 <span className="text-[#345477] font-semibold">{product.category_name}</span>
                 {product.is_featured === 1 && (
                   <>
@@ -181,7 +221,9 @@ export function ProductDetailPage() {
             <div className="p-6 rounded-xl border border-[#345477]/16 bg-white space-y-5">
               <div className="flex flex-wrap items-baseline justify-between gap-4">
                 <div>
-                  <p className="text-xs text-[#7890AA] mb-1">Harga Produk Digital</p>
+                  <p className="text-xs text-[#7890AA] mb-1">
+                    {isDemoProduct ? 'Harga Contoh (DEMO)' : 'Harga Produk Digital'}
+                  </p>
                   {product.is_free ? (
                     <p className="font-mono-num text-3xl font-bold text-[#345477]">Gratis</p>
                   ) : hasDiscount ? (
@@ -200,14 +242,39 @@ export function ProductDetailPage() {
                   )}
                 </div>
 
-                <div className="text-xs text-[#7890AA] sm:text-right">
-                  <p>Total Unduhan: <span className="font-mono-num font-semibold text-[#26364A]">{product.download_count}</span></p>
-                  <p>Akses: <span className="font-semibold text-[#345477]">Selamanya setelah Lunas</span></p>
-                </div>
+                {isDemoProduct ? (
+                  <p className="text-xs font-semibold text-[#8A6420] sm:text-right">
+                    Bukan harga jual · Tidak tersedia untuk dipesan
+                  </p>
+                ) : isManualOrder ? (
+                  <p className="text-xs text-[#7890AA] sm:text-right">
+                    Pemesanan manual · File produk diberikan setelah pembayaran diverifikasi
+                  </p>
+                ) : (
+                  <div className="text-xs text-[#7890AA] sm:text-right">
+                    <p>Total Unduhan: <span className="font-mono-num font-semibold text-[#26364A]">{product.download_count}</span></p>
+                    <p>Akses: <span className="font-semibold text-[#345477]">Selamanya setelah Lunas</span></p>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
-              {product.is_free && product.allow_public_free_download ? (
+              {isManualOrder ? (
+                <a
+                  href={product.manual_order_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 px-6 py-3.5 rounded-lg text-sm font-semibold bg-[#345477] text-white hover:bg-[#294462] transition-colors"
+                >
+                  <Zap className="w-4 h-4 text-[#D6B36A]" />
+                  <span>Pesan Sekarang</span>
+                </a>
+              ) : isDemoProduct ? (
+                <div className="rounded-lg border border-[#D6B36A]/45 bg-[#F5F0E6] px-4 py-3 text-sm leading-relaxed text-[#345477]">
+                  Detail ini hanya contoh tampilan. Pembelian, keranjang, pembayaran, dan unduhan
+                  tidak tersedia pada versi GitHub Pages.
+                </div>
+              ) : product.is_free && product.allow_public_free_download ? (
                 <div className="flex flex-wrap gap-3">
                   <a
                     href={`/api/products/${product.id}/free-download`}
@@ -262,13 +329,15 @@ export function ProductDetailPage() {
                   {product.file_size_label || 'Berkas Digital Lengkap'}
                 </p>
               </div>
-              <div className="p-4 rounded-xl border border-[#345477]/12 sm:col-span-2">
-                <p className="text-xs text-[#7890AA] mb-1">Lisensi Penggunaan</p>
-                <p className="font-semibold text-[#26364A] flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#B89143]" />
-                  <span>{product.license_type}</span>
-                </p>
-              </div>
+              {product.license_type && (
+                <div className="p-4 rounded-xl border border-[#345477]/12 sm:col-span-2">
+                  <p className="text-xs text-[#7890AA] mb-1">Lisensi Penggunaan</p>
+                  <p className="font-semibold text-[#26364A] flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-[#B89143]" />
+                    <span>{product.license_type}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Full Description */}
@@ -298,9 +367,11 @@ export function ProductDetailPage() {
             <div className="p-5 rounded-xl border border-[#D6B36A]/60 bg-[#F5F0E6] space-y-2">
               <h3 className="font-sans-ui text-sm font-bold text-[#345477]">Informasi Pembelian</h3>
               <p className="text-sm text-[#26364A]/85 leading-relaxed">
-                Pembayaran mendukung Transfer Bank dan QRIS. Setelah Anda mengunggah bukti
-                pembayaran dan diverifikasi oleh admin NusaKlik, tautan unduhan resmi serta invoice
-                berwatermark langsung terbuka pada halaman pesanan dan akun Anda.
+                {isDemoProduct
+                  ? 'Informasi harga, format, lisensi, dan deskripsi pada halaman ini berasal dari data seed DEMO. Tidak ada pembayaran atau file produk yang tersedia di situs statis.'
+                  : isManualOrder
+                    ? 'Pesan melalui Google Form. Pemesanan dan verifikasi pembayaran dilakukan secara manual; file produk hanya diberikan setelah pembayaran diverifikasi. Tidak ada tautan file publik.'
+                    : 'Pembayaran mendukung Transfer Bank dan QRIS. Setelah Anda mengunggah bukti pembayaran dan diverifikasi oleh admin NusaKlik, tautan unduhan resmi serta invoice berwatermark langsung terbuka pada halaman pesanan dan akun Anda.'}
               </p>
             </div>
           </div>

@@ -1,13 +1,20 @@
 import { MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { IS_STATIC_SITE, siteAsset } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { isSafeUrl } from '../utils/format';
 
 export function Footer() {
-  const { settings } = useStore();
+  const { settings, publicCatalogLoading, publicCatalogSource } = useStore();
+  const isStaticFallback = publicCatalogSource === 'fallback';
+  const staticCatalogDescription = publicCatalogLoading
+    ? 'Katalog produk sedang dimuat dari Admin Google Sheets.'
+    : isStaticFallback
+      ? 'Katalog Admin tidak dapat dimuat; situs menampilkan katalog cadangan yang sebagian berisi data DEMO.'
+      : 'Produk aktif dimuat dari Admin Google Sheets. Pemesanan dilakukan manual melalui Google Form.';
   const logoWhite = isSafeUrl(settings.logo_white_url)
     ? settings.logo_white_url
-    : '/assets/logo/logo-white.svg';
+    : siteAsset('assets/logo/logo-white.svg');
 
   const cleanWa = (settings.whatsapp_number || '').replace(/[^\d]/g, '');
 
@@ -21,7 +28,9 @@ export function Footer() {
               <img src={logoWhite} alt={settings.store_name} className="h-9 w-auto object-contain" />
             </Link>
             <p className="text-sm font-medium text-[#D6B36A]">{settings.tagline_main}</p>
-            <p className="text-sm text-white/80 leading-relaxed">{settings.footer_text}</p>
+            <p className="text-sm text-white/80 leading-relaxed">
+              {IS_STATIC_SITE ? staticCatalogDescription : settings.footer_text}
+            </p>
             <p className="text-xs text-white/70 tracking-wide">{settings.tagline_sub}</p>
           </div>
 
@@ -41,8 +50,15 @@ export function Footer() {
           <div>
             <h3 className="font-sans-ui text-sm font-semibold text-[#D6B36A] mb-4">Informasi & Layanan</h3>
             <ul className="space-y-2.5 text-sm text-white/85">
-              <li><Link to="/panduan-pembelian" className="hover:text-[#D6B36A] transition-colors">Panduan Pembelian</Link></li>
-              <li><Link to="/konfirmasi-pembayaran" className="hover:text-[#D6B36A] transition-colors">Konfirmasi Pembayaran</Link></li>
+              {!IS_STATIC_SITE && <li><Link to="/panduan-pembelian" className="hover:text-[#D6B36A] transition-colors">Panduan Pembelian</Link></li>}
+              <li>
+                <Link
+                  to={IS_STATIC_SITE ? '/katalog' : '/konfirmasi-pembayaran'}
+                  className="hover:text-[#D6B36A] transition-colors"
+                >
+                  {IS_STATIC_SITE ? 'Buka Katalog untuk Memesan' : 'Konfirmasi Pembayaran'}
+                </Link>
+              </li>
               <li><Link to="/faq" className="hover:text-[#D6B36A] transition-colors">Pertanyaan Umum (FAQ)</Link></li>
               <li><Link to="/tentang" className="hover:text-[#D6B36A] transition-colors">Tentang NusaKlik</Link></li>
               <li><Link to="/kontak" className="hover:text-[#D6B36A] transition-colors">Hubungi Kami</Link></li>
@@ -51,12 +67,24 @@ export function Footer() {
 
           {/* Kebijakan & Kontak */}
           <div>
-            <h3 className="font-sans-ui text-sm font-semibold text-[#D6B36A] mb-4">Kebijakan & Kontak</h3>
-            <ul className="space-y-2.5 text-sm text-white/85 mb-5">
+            <h3 className="font-sans-ui text-sm font-semibold text-[#D6B36A] mb-4">
+              {IS_STATIC_SITE ? 'Status Situs' : 'Kebijakan & Kontak'}
+            </h3>
+            {!IS_STATIC_SITE && <ul className="space-y-2.5 text-sm text-white/85 mb-5">
               <li><Link to="/kebijakan-privasi" className="hover:text-[#D6B36A] transition-colors">Kebijakan Privasi</Link></li>
               <li><Link to="/syarat-ketentuan" className="hover:text-[#D6B36A] transition-colors">Syarat dan Ketentuan</Link></li>
               <li><Link to="/kebijakan-pengembalian-dana" className="hover:text-[#D6B36A] transition-colors">Kebijakan Pengembalian Dana</Link></li>
-            </ul>
+            </ul>}
+            {IS_STATIC_SITE && (
+              <p className="text-xs text-white/75 leading-relaxed">
+                {publicCatalogLoading
+                  ? 'Katalog Admin sedang dimuat. Pemesanan tersedia melalui tombol pada produk yang aktif.'
+                  : isStaticFallback
+                  ? 'Katalog cadangan berisi entri DEMO yang bukan penawaran aktif. Pesanan manual tersedia pada produk dengan tombol Pesan Sekarang.'
+                  : 'Katalog aktif dikelola melalui Google Sheets. Pesanan dilakukan melalui Google Form dan file diberikan setelah pembayaran diverifikasi.'}{' '}
+                Tidak ada checkout otomatis, akun, atau tautan unduhan publik.
+              </p>
+            )}
             {(settings.email || cleanWa) ? (
               <div className="text-xs text-white/80 space-y-2 pt-3 border-t border-white/15">
                 {settings.email && <p>Email: {settings.email}</p>}
@@ -98,9 +126,11 @@ export function Footer() {
                 YouTube
               </a>
             )}
-            <Link to="/admin" className="hover:text-[#D6B36A] font-semibold">
-              Dashboard Admin
-            </Link>
+            {!IS_STATIC_SITE && (
+              <Link to="/admin" className="hover:text-[#D6B36A] font-semibold">
+                Dashboard Admin
+              </Link>
+            )}
           </div>
         </div>
       </div>

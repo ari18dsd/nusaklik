@@ -1,5 +1,6 @@
 import { Eye, ShoppingBag, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { IS_STATIC_SITE } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import type { Product } from '../types';
 import { formatRupiah } from '../utils/format';
@@ -14,6 +15,8 @@ export function ProductCard({ product, disableNavigation = false }: ProductCardP
   const { addToCart } = useStore();
   const navigate = useNavigate();
   const isBook = product.cover_aspect_type === 'book' || product.is_book_format === 1;
+  const isManualOrder = Boolean(product.manual_order_url);
+  const isDemoProduct = IS_STATIC_SITE && !isManualOrder;
   const hasDiscount =
     !product.is_free && product.discount_price !== null && product.discount_price < product.price;
 
@@ -26,7 +29,7 @@ export function ProductCard({ product, disableNavigation = false }: ProductCardP
   const primaryLabel = statusTags[0] || '';
 
   const handleBuyNow = () => {
-    if (disableNavigation) return;
+    if (disableNavigation || IS_STATIC_SITE) return;
     if (product.is_free && product.allow_public_free_download) {
       navigate(`/produk/${product.slug}`);
       return;
@@ -43,17 +46,24 @@ export function ProductCard({ product, disableNavigation = false }: ProductCardP
         <span className="truncate font-medium">
           {product.category_name || 'Produk Digital'} · {product.file_format}
         </span>
-        {primaryLabel && (
-          <span
-            className={`shrink-0 font-semibold ${
-              primaryLabel === 'Promo' || primaryLabel === 'Unggulan'
-                ? 'text-[#B89143]'
-                : 'text-[#345477]'
-            }`}
-          >
-            {primaryLabel}
-          </span>
-        )}
+        <span className="flex shrink-0 items-center gap-1.5">
+          {isDemoProduct && (
+            <span className="rounded-full border border-[#D6B36A]/60 bg-[#F5F0E6] px-2 py-0.5 text-[10px] font-bold text-[#8A6420]">
+              DEMO
+            </span>
+          )}
+          {primaryLabel && (
+            <span
+              className={`font-semibold ${
+                primaryLabel === 'Promo' || primaryLabel === 'Unggulan'
+                  ? 'text-[#B89143]'
+                  : 'text-[#345477]'
+              }`}
+            >
+              {primaryLabel}
+            </span>
+          )}
+        </span>
       </div>
 
       {/* Consistent Cover Stage */}
@@ -124,25 +134,41 @@ export function ProductCard({ product, disableNavigation = false }: ProductCardP
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleBuyNow}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-[#D6B36A] text-[#26364A] hover:bg-[#c8a357] transition-colors whitespace-nowrap cursor-pointer"
+          {isManualOrder ? (
+            <a
+              href={product.manual_order_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex w-full items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-[#D6B36A] text-[#26364A] hover:bg-[#c8a357] transition-colors whitespace-nowrap"
             >
               <Zap className="w-3.5 h-3.5" />
-              <span>{product.is_free ? 'Unduh' : 'Beli Sekarang'}</span>
-            </button>
+              <span>Pesan Sekarang</span>
+            </a>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={IS_STATIC_SITE}
+                title={IS_STATIC_SITE ? 'Transaksi tidak aktif pada versi demo.' : undefined}
+                onClick={handleBuyNow}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-[#D6B36A] text-[#26364A] hover:bg-[#c8a357] transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <Zap className="w-3.5 h-3.5" />
+                <span>{IS_STATIC_SITE ? 'Demo Saja' : product.is_free ? 'Unduh' : 'Beli Sekarang'}</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => !disableNavigation && addToCart(product)}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-[#345477] text-white hover:bg-[#294462] transition-colors whitespace-nowrap cursor-pointer"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-[#D6B36A]" />
-              <span>Keranjang</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                disabled={IS_STATIC_SITE}
+                title={IS_STATIC_SITE ? 'Keranjang tidak tersedia pada versi demo.' : undefined}
+                onClick={() => !disableNavigation && addToCart(product)}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-xs font-semibold bg-[#345477] text-white hover:bg-[#294462] transition-colors whitespace-nowrap cursor-pointer disabled:cursor-not-allowed disabled:opacity-70"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-[#D6B36A]" />
+                <span>{IS_STATIC_SITE ? 'Nonaktif' : 'Keranjang'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </article>

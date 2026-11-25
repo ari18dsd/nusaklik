@@ -1,7 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AdminDashboardPage } from './admin/AdminDashboardPage';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
+import { IS_STATIC_SITE } from './config/staticSite';
 import { StoreProvider, useStore } from './context/StoreContext';
 import { AccountPage } from './pages/AccountPage';
 import { LoginPage, RegisterPage } from './pages/AuthPages';
@@ -14,6 +15,7 @@ import { AboutPage, ContactPage, FaqPage, PolicyPage } from './pages/InfoPages';
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
 import { OrderHistoryPage } from './pages/OrderHistoryPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { StaticContactPage } from './pages/StaticSitePages';
 
 function ToastBanner() {
   const { toast } = useStore();
@@ -35,12 +37,69 @@ function ToastBanner() {
 
 function AppShell() {
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const { publicCatalogSource } = useStore();
+  const isAdminRoute = !IS_STATIC_SITE && location.pathname.startsWith('/admin');
+  const isStaticFallback = publicCatalogSource === 'fallback';
 
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#26364A]">
       {!isAdminRoute && <Header />}
       <main className="flex-1">
+        {IS_STATIC_SITE ? (
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/katalog" element={<CatalogPage />} />
+            <Route path="/produk/:slug" element={<ProductDetailPage />} />
+            <Route path="/kategori" element={<CategoriesPage />} />
+            <Route path="/kategori/:slug" element={<CatalogPage />} />
+            <Route
+              path="/produk-gratis"
+              element={
+                <CatalogPage
+                  presetFilter="gratis"
+                  pageTitle={isStaticFallback ? 'Produk Bertanda Gratis (DEMO)' : 'Produk Gratis'}
+                  pageDescription={
+                    isStaticFallback
+                      ? 'Data contoh produk bertanda gratis. Tidak ada file unduhan atau penawaran aktif.'
+                      : 'Katalog Admin tidak menyediakan informasi unduhan publik untuk produk gratis.'
+                  }
+                />
+              }
+            />
+            <Route
+              path="/produk-promo"
+              element={
+                <CatalogPage
+                  presetFilter="promo"
+                  pageTitle={isStaticFallback ? 'Produk Bertanda Promo (DEMO)' : 'Produk Promo'}
+                  pageDescription={
+                    isStaticFallback
+                      ? 'Data contoh produk dan harga bertanda promo; bukan penawaran yang dapat dibeli.'
+                      : 'Tidak ada informasi promo aktif dalam katalog Admin saat ini.'
+                  }
+                />
+              }
+            />
+            <Route
+              path="/produk-unggulan"
+              element={
+                <CatalogPage
+                  presetFilter="unggulan"
+                  pageTitle={isStaticFallback ? 'Produk Unggulan (DEMO)' : 'Produk Unggulan'}
+                  pageDescription={
+                    isStaticFallback
+                      ? 'Data contoh produk unggulan dari katalog cadangan.'
+                      : 'Produk Admin belum menyediakan penanda produk unggulan.'
+                  }
+                />
+              }
+            />
+            <Route path="/tentang" element={<AboutPage />} />
+            <Route path="/kontak" element={<StaticContactPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        ) : (
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/katalog" element={<CatalogPage />} />
@@ -99,6 +158,7 @@ function AppShell() {
           <Route path="/admin/*" element={<AdminDashboardPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        )}
       </main>
       {!isAdminRoute && <Footer />}
       <ToastBanner />
@@ -107,11 +167,12 @@ function AppShell() {
 }
 
 export default function App() {
+  const Router = IS_STATIC_SITE ? HashRouter : BrowserRouter;
   return (
-    <BrowserRouter>
+    <Router>
       <StoreProvider>
         <AppShell />
       </StoreProvider>
-    </BrowserRouter>
+    </Router>
   );
 }

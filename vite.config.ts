@@ -4,11 +4,28 @@ import fs from 'fs';
 import path from 'path';
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
       tailwindcss(),
+      {
+        name: 'github-pages-preview-metadata',
+        transformIndexHtml(html) {
+          if (mode !== 'github-pages') {
+            return html;
+          }
+          return html
+            .replace(
+              /NusaKlik — Toko Produk Digital/g,
+              'NusaKlik — Pratinjau Storefront DEMO'
+            )
+            .replace(
+              /Toko produk digital NusaKlik\. Temukan produk untuk membaca, belajar, dan berkarya\./g,
+              'Pratinjau desain storefront NusaKlik dengan data produk contoh DEMO. Pesanan, pembayaran, akun, dan unduhan tidak tersedia.'
+            );
+        },
+      },
       // Copies src/assets into dist/ so root-relative URLs like
       // "/src/assets/images/..." (e.g. generate_image output) still resolve
       // in production builds. Do not remove.
@@ -20,6 +37,11 @@ export default defineConfig(() => {
             return;
           }
           const distDir = path.resolve(import.meta.dirname, 'dist');
+          if (mode === 'github-pages') {
+            fs.rmSync(path.join(distDir, 'sitemap.xml'), { force: true });
+            fs.writeFileSync(path.join(distDir, 'robots.txt'), 'User-agent: *\nAllow: /\n');
+            return;
+          }
           const srcAssets = path.resolve(import.meta.dirname, 'src/assets');
           const distAssets = path.resolve(distDir, 'src/assets');
           if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
