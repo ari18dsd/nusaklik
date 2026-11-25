@@ -8,7 +8,7 @@
     "dev": "tsx server.ts",
     "start": "node --experimental-strip-types server.ts",
     "build": "vite build",
-    "build:pages": "vite build --mode github-pages --base=/nusaklik-ai/",
+    "build:pages": "vite build --mode github-pages",
     "preview": "vite preview",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
     "lint": "tsc --noEmit",

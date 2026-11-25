@@ -13,7 +13,7 @@ import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/ProductCard';
 import { SeoHead } from '../components/SeoHead';
 import { StaticDemoNotice } from '../components/StaticDemoNotice';
-import { IS_STATIC_SITE } from '../config/staticSite';
+import { IS_STATIC_SITE, siteAsset } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { apiRequest } from '../services/api';
 import type { Product } from '../types';
@@ -98,10 +98,10 @@ export function HomePage() {
 
   const heroBanner = isSafeUrl(settings.banner_hero_url)
     ? settings.banner_hero_url
-    : '/assets/banner/hero-nusaklik.jpg';
+    : siteAsset('assets/banner/hero-nusaklik.jpg');
   const promoBanner = isSafeUrl(settings.banner_promo_url)
     ? settings.banner_promo_url
-    : '/assets/banner/promo-nusaklik.jpg';
+    : siteAsset('assets/banner/promo-nusaklik.jpg');
 
   return (
     <div className="bg-white text-[#26364A]">

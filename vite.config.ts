@@ -6,6 +6,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(({ mode }) => {
   return {
+    base: mode === 'github-pages' ? '/nusaklik/' : '/',
     plugins: [
       react(),
       tailwindcss(),

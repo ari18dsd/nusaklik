@@ -20,6 +20,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { InvoiceDocument } from '../components/InvoiceDocument';
 import { SeoHead } from '../components/SeoHead';
+import { siteAsset } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import { apiRequest } from '../services/api';
 import type {
@@ -347,7 +348,9 @@ export function AdminDashboardPage() {
 
   // ─── LOGIN / FIRST-RUN SETUP SCREEN ──────────────────────────────────────────
   if (!adminToken || !admin) {
-    const logoSrc = isSafeUrl(settings.logo_url) ? settings.logo_url : '/assets/logo/logo-horizontal.svg';
+    const logoSrc = isSafeUrl(settings.logo_url)
+      ? settings.logo_url
+      : siteAsset('assets/logo/logo-horizontal.svg');
     return (
       <div className="bg-[#EAF0F7] min-h-[85vh] flex items-center justify-center px-4 py-12">
         <SeoHead title="Portal Admin NusaKlik" />
@@ -478,7 +481,11 @@ export function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <img
-              src={isSafeUrl(settings.logo_url) ? settings.logo_url : '/assets/logo/logo-horizontal.svg'}
+              src={
+                isSafeUrl(settings.logo_url)
+                  ? settings.logo_url
+                  : siteAsset('assets/logo/logo-horizontal.svg')
+              }
               alt={settings.store_name}
               className="h-7 w-auto object-contain"
             />

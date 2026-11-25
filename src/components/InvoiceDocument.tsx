@@ -1,4 +1,5 @@
 import { Printer } from 'lucide-react';
+import { siteAsset } from '../config/staticSite';
 import { useStore } from '../context/StoreContext';
 import type { Order } from '../types';
 import { formatRupiah, formatTanggal, isSafeUrl, PAYMENT_STATUS_META } from '../utils/format';
@@ -9,10 +10,12 @@ interface InvoiceDocumentProps {
 
 export function InvoiceDocument({ order }: InvoiceDocumentProps) {
   const { settings } = useStore();
-  const logoSrc = isSafeUrl(settings.logo_url) ? settings.logo_url : '/assets/logo/logo-horizontal.svg';
+  const logoSrc = isSafeUrl(settings.logo_url)
+    ? settings.logo_url
+    : siteAsset('assets/logo/logo-horizontal.svg');
   const watermarkSrc = isSafeUrl(settings.watermark_url)
     ? settings.watermark_url
-    : '/assets/watermark/watermark-blue.png';
+    : siteAsset('assets/watermark/watermark-blue.png');
 
   const statusMeta = PAYMENT_STATUS_META[order.payment_status];
 
